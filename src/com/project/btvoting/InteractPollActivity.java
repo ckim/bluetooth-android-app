@@ -1,5 +1,7 @@
 package com.project.btvoting;
 
+import java.util.ArrayList;
+
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -82,7 +84,8 @@ public class InteractPollActivity extends Activity {
 					title = (TextView) findViewById(R.id.otherPollNames);
 					title.setText(mConnectedDeviceName + "'s polls");
 
-					getPollsFromOtherDevice();
+					//					getPollsFromOtherDevice();
+					sendPolls();
 
 					mPollArrayAdapter.clear();
 					break;
@@ -112,11 +115,16 @@ public class InteractPollActivity extends Activity {
 					Log.d(TAG, "OHMIGAWD POLLS REQUEST SUCCESSFULLY TRANSMITTED!!!!");
 				}
 
+				processPollsReceived(readMessage);
+
 				mPollArrayAdapter.add(mConnectedDeviceName + ":  " + readMessage);
 				break;
 			case MESSAGE_DEVICE_NAME:
 				// save the connected device's name
 				mConnectedDeviceName = msg.getData().getString(DEVICE_NAME);
+				if (mConnectedDeviceName.length() > 8) {
+					mConnectedDeviceName = mConnectedDeviceName.substring(0, 8);
+				}
 				Toast.makeText(getApplicationContext(), "Connected to " + mConnectedDeviceName,
 						Toast.LENGTH_SHORT).show();
 				break;
@@ -164,6 +172,40 @@ public class InteractPollActivity extends Activity {
 		} else {
 			setupChat();
 		}
+	}
+
+	private void processPollsReceived(String readMessage) {
+		mPollArrayAdapter.add(mConnectedDeviceName);
+		String[] polls = readMessage.split(":");
+		for (String string : polls) {
+			mPollArrayAdapter.add(string);
+		}
+	}
+
+	private void sendPolls() {
+		ArrayList<String> pollNames = new ArrayList<String>();
+		ArrayList<String> options = new ArrayList<String>();
+
+		String pollCsv = "polls:";
+
+		// load the list of poll names to view
+		CreatePollActivity.loadArray(MainActivity.POLL_NAMES, pollNames, getBaseContext());
+
+		for (String name : pollNames) {
+			Log.d(TAG, "now in poll Name " + name);
+			pollCsv = pollCsv.concat(name + ",");
+			// load the poll options
+			CreatePollActivity.loadArray(name, options, getBaseContext());
+			for (String s : options) {
+				pollCsv = pollCsv.concat(s + ",");
+			}
+			pollCsv = pollCsv.concat(":");
+			pollCsv = pollCsv.replace(",:", ":");
+		}
+		// send them
+		sendMessage(pollCsv);
+
+		Log.d(TAG, "sent the polls");
 	}
 
 	private void setupChat() {
