@@ -77,10 +77,10 @@ public class InteractPollActivity extends Activity {
 				case STATE_CONNECTED:
 					Log.d(TAG, "Handler is STATE_CONNECTED!!!!!!!!!!");
 					mTitle.setText(R.string.title_connected_to);
-					mTitle.append(mConnectedDeviceName);
+					mTitle.append(cutToEightChars(mConnectedDeviceName));
 
 					title = (TextView) findViewById(R.id.otherPollNames);
-					title.setText(mConnectedDeviceName + "'s polls");
+					title.setText(cutToEightChars(mConnectedDeviceName) + "'s polls");
 
 					sendPolls();
 
@@ -94,6 +94,8 @@ public class InteractPollActivity extends Activity {
 				case STATE_NONE:
 					Log.d(TAG, "Handler is STATE_NONE");
 					mTitle.setText(R.string.title_not_connected);
+					title = (TextView) findViewById(R.id.otherPollNames);
+					title.setText("");
 					break;
 				}
 				break;
@@ -115,10 +117,8 @@ public class InteractPollActivity extends Activity {
 			case MESSAGE_DEVICE_NAME:
 				// save the connected device's name
 				mConnectedDeviceName = msg.getData().getString(DEVICE_NAME);
-				if (mConnectedDeviceName.length() > 8) {
-					mConnectedDeviceName = mConnectedDeviceName.substring(0, 8);
-				}
-				Toast.makeText(getApplicationContext(), "Connected to " + mConnectedDeviceName,
+				Toast.makeText(getApplicationContext(),
+						"Connected to " + cutToEightChars(mConnectedDeviceName),
 						Toast.LENGTH_SHORT).show();
 				break;
 			case MESSAGE_TOAST:
@@ -129,6 +129,14 @@ public class InteractPollActivity extends Activity {
 		}
 
 	};
+
+	public String cutToEightChars(String s) {
+		String newName = s;
+		if (s.length() > 8) {
+			newName = s.substring(0, 8);
+		}
+		return newName;
+	}
 
 	private TextView title;
 
@@ -161,14 +169,18 @@ public class InteractPollActivity extends Activity {
 	}
 
 	private void processPollsReceived(String readMessage) {
-		mPollArrayAdapter.add(mConnectedDeviceName);
 		String[] polls = readMessage.split(":");
+		mPollArrayAdapter.add("polls");
 		for (String string : polls) {
+			String poll = "";
 			String[] options = string.split(",");
-			mPollArrayAdapter.add(options[0]);
+			//			mPollArrayAdapter.add(options[0]);
+			poll.concat(options[0]);
 			for (int i = 1; i < options.length; i++) {
-				mPollArrayAdapter.add("\t" + options[i]);
+				//				mPollArrayAdapter.add("\t" + options[i]);
+				poll.concat("\t" + options[i]);
 			}
+			mPollArrayAdapter.add(poll);
 		}
 	}
 
@@ -176,7 +188,7 @@ public class InteractPollActivity extends Activity {
 		ArrayList<String> pollNames = new ArrayList<String>();
 		ArrayList<String> options = new ArrayList<String>();
 
-		String pollCsv = "polls:";
+		String pollCsv = "";
 
 		// load the list of poll names to view
 		CreatePollActivity.loadArray(MainActivity.POLL_NAMES, pollNames, getBaseContext());
