@@ -1,0 +1,38 @@
+<resources>
+
+    <string name="app_name">btvoting</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="menu_settings">Settings</string>
+    <string name="title_activity_main">A Voting App 0.1</string>
+    <string name="buttonCreateNewPoll">Create a new poll</string>
+    <string name="buttonCreatePoll">Create poll</string>
+    <string name="buttonFindPolls">Find nearby polls</string>
+     <string name="buttonInitiateFind">Choose a device</string>
+    <string name="enterPollName">Enter Poll Name</string>
+    <string name="enterOptionName">Enter Option Name</string>
+    <string name="pollNameHint">Name of poll</string>
+    <string name="optionNameHint">Desired option</string>
+    <string name="AddPollOption">Add new poll option</string>
+    <string name="discoverable">Make discoverable</string>
+    <string name="returnToMain">Return to main screen</string>
+    <string name="listOfPolls">Your Own Polls</string>
+    <string name="otherPollNames">Discovered Polls</string>
+
+    <!-- BluetoothChat -->
+    <string name="send">Send</string>
+    <string name="not_connected">You are not connected to a device</string>
+    <string name="bt_not_enabled_leaving">Bluetooth was not enabled. Leaving Bluetooth Chat.</string>
+    <string name="title_connecting">connecting...</string>
+    <string name="title_connected_to">connected: </string>
+    <string name="title_not_connected">not connected</string>
+
+    <!-- DeviceListActivity -->
+    <string name="scanning">scanning for devices...</string>
+    <string name="select_device">select a device to connect</string>
+    <string name="none_paired">No devices have been paired</string>
+    <string name="none_found">No devices found</string>
+    <string name="title_paired_devices">Paired Devices</string>
+    <string name="title_other_devices">Other Available Devices</string>
+    <string name="button_scan">Scan for devices</string>
+    
+</resources>

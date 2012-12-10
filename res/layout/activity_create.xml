@@ -1,0 +1,64 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <ScrollView
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent" >
+
+        <LinearLayout
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:orientation="vertical" >
+
+            <TextView
+                android:id="@+id/pollName"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/enterPollName" />
+
+            <EditText
+                android:id="@+id/editPollName"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/pollNameHint" />
+
+            <LinearLayout
+                xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/pollOptions"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" >
+            </LinearLayout>
+            
+             <TextView
+                android:id="@+id/optionName"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/enterOptionName" />
+
+            <EditText
+                android:id="@+id/editOptionName"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/optionNameHint" />
+
+            <Button
+                android:id="@+id/addPollOption"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:focusable="false"
+                android:text="@string/AddPollOption" />
+
+            <Button
+                android:id="@+id/createPoll2"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:focusable="false"
+                android:text="@string/buttonCreatePoll" />
+        </LinearLayout>
+    </ScrollView>
+
+</RelativeLayout>
