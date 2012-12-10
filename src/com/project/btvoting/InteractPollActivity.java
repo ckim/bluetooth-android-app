@@ -56,8 +56,6 @@ public class InteractPollActivity extends Activity {
 	public static final int STATE_CONNECTING = 2; // now initiating an outgoing connection
 	public static final int STATE_CONNECTED = 3; // now connected to a remote device
 
-	private static String REQUEST_POLLS_LIST = "reqpolls";
-
 	// Intent request codes
 	public static final int REQUEST_CONNECT_DEVICE = 1;
 	private static final int REQUEST_ENABLE_BT = 2;
@@ -84,7 +82,6 @@ public class InteractPollActivity extends Activity {
 					title = (TextView) findViewById(R.id.otherPollNames);
 					title.setText(mConnectedDeviceName + "'s polls");
 
-					//					getPollsFromOtherDevice();
 					sendPolls();
 
 					mPollArrayAdapter.clear();
@@ -101,23 +98,19 @@ public class InteractPollActivity extends Activity {
 				}
 				break;
 			case MESSAGE_WRITE:
-				byte[] writeBuf = (byte[]) msg.obj;
+				//				byte[] writeBuf = (byte[]) msg.obj;
 				// construct a string from the buffer
-				String writeMessage = new String(writeBuf);
-				mPollArrayAdapter.add("Me:  " + writeMessage);
+				//				String writeMessage = new String(writeBuf);
+				//				mPollArrayAdapter.add("Me:  " + writeMessage);
 				break;
 			case MESSAGE_READ:
 				byte[] readBuf = (byte[]) msg.obj;
 				// construct a string from the valid bytes in the buffer
 				String readMessage = new String(readBuf, 0, msg.arg1);
 
-				if (readMessage.equals(REQUEST_POLLS_LIST)) {
-					Log.d(TAG, "OHMIGAWD POLLS REQUEST SUCCESSFULLY TRANSMITTED!!!!");
-				}
-
 				processPollsReceived(readMessage);
+				//				mPollArrayAdapter.add(mConnectedDeviceName + ":  " + readMessage);
 
-				mPollArrayAdapter.add(mConnectedDeviceName + ":  " + readMessage);
 				break;
 			case MESSAGE_DEVICE_NAME:
 				// save the connected device's name
@@ -138,13 +131,6 @@ public class InteractPollActivity extends Activity {
 	};
 
 	private TextView title;
-
-	private void getPollsFromOtherDevice() {
-		// request them
-		sendMessage(REQUEST_POLLS_LIST);
-		// get them back
-		// put them in mPollArrayAdapter
-	}
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -178,7 +164,11 @@ public class InteractPollActivity extends Activity {
 		mPollArrayAdapter.add(mConnectedDeviceName);
 		String[] polls = readMessage.split(":");
 		for (String string : polls) {
-			mPollArrayAdapter.add(string);
+			String[] options = string.split(",");
+			mPollArrayAdapter.add(options[0]);
+			for (int i = 1; i < options.length; i++) {
+				mPollArrayAdapter.add("\t" + options[i]);
+			}
 		}
 	}
 
