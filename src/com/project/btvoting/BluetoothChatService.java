@@ -79,8 +79,7 @@ public class BluetoothChatService {
 	 * @param state  An integer defining the current connection state
 	 */
 	private synchronized void setState(int state) {
-		if (D)
-			Log.d(TAG, "setState() " + mState + " -> " + state);
+		Log.d(TAG, "setState() " + mState + " -> " + state);
 		mState = state;
 
 		// Give the new state to the Handler so the UI Activity can update

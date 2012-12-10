@@ -21,6 +21,8 @@ import android.widget.Toast;
 
 public class InteractPollActivity extends Activity {
 
+	private static final String TAG = "InteractPollActivity";
+
 	protected Button initiateFind;
 
 	// Message types sent from the BluetoothChatService Handler
@@ -34,35 +36,131 @@ public class InteractPollActivity extends Activity {
 	public static final String DEVICE_NAME = "device_name";
 	public static final String TOAST = "toast";
 
-	private static final String TAG = "InteractPollActivity";
-
-	// Array adapter for the conversation thread
-	private ArrayAdapter<String> mPollArrayAdapter;
-	// String buffer for outgoing messages
-	private StringBuffer mOutStringBuffer;
-	// Member object for the chat services
-	private BluetoothChatService mChatService = null;
+	// Intent request codes
+	public static final int REQUEST_CONNECT_DEVICE = 1;
+	private static final int REQUEST_ENABLE_BT = 2;
 
 	// Layout Views
 	private TextView mTitle;
 	private ListView mPollsView;
 
-	// Name for the SDP record when creating server socket
-	public static final String NAME = "BluetoothPoll";
+	// Name of the connected device
+	private String mConnectedDeviceName = null;
+	// Array adapter for the conversation thread
+	private ArrayAdapter<String> mPollArrayAdapter;
+	// String buffer for outgoing messages
+	private StringBuffer mOutStringBuffer;
+	// Local Bluetooth adapter
+	private BluetoothAdapter mBluetoothAdapter = null;
+	// Member object for the chat services
+	private BluetoothChatService mChatService = null;
 
-	// Constants that indicate the current connection state
-	public static final int STATE_NONE = 0; // we're doing nothing
-	public static final int STATE_LISTEN = 1; // now listening for incoming connections
-	public static final int STATE_CONNECTING = 2; // now initiating an outgoing connection
-	public static final int STATE_CONNECTED = 3; // now connected to a remote device
+	private TextView title;
 
-	// Intent request codes
-	public static final int REQUEST_CONNECT_DEVICE = 1;
-	private static final int REQUEST_ENABLE_BT = 2;
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		Log.d(TAG, "in on Create");
 
-	private int mState;
-	private BluetoothAdapter mBluetoothAdapter;
-	public String mConnectedDeviceName;
+		// Set up the window layout
+		requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
+		setContentView(R.layout.activity_interact);
+		getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.custom_title);
+
+		// Set up the custom title
+		mTitle = (TextView) findViewById(R.id.title_left_text);
+		mTitle.setText(R.string.app_name);
+		mTitle = (TextView) findViewById(R.id.title_right_text);
+
+		// Get the local Bluetooth adapter
+		mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+		// If the adapter is null, then Bluetooth is not supported
+		if (mBluetoothAdapter == null) {
+			Toast.makeText(this, "Bluetooth is not available", Toast.LENGTH_LONG).show();
+			finish();
+			return;
+		}
+	}
+
+	@Override
+	public void onStart() {
+		super.onStart();
+		Log.d(TAG, "ON START");
+
+		// If BT is not on, request that it be enabled.
+		// setupChat() will then be called during onActivityResult
+		if (!mBluetoothAdapter.isEnabled()) {
+			Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+			startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
+			// Otherwise, setup the session
+		} else {
+			if (mChatService == null)
+				setupChat();
+		}
+	}
+
+	@Override
+	public synchronized void onResume() {
+		super.onResume();
+		Log.d(TAG, "ON RESUME");
+
+		// Performing this check in onResume() covers the case in which BT was
+		// not enabled during onStart(), so we were paused to enable it...
+		// onResume() will be called when ACTION_REQUEST_ENABLE activity returns.
+		if (mChatService != null) {
+			// Only if the state is STATE_NONE, do we know that we haven't started already
+			if (mChatService.getState() == BluetoothChatService.STATE_NONE) {
+				// Start the Bluetooth chat services
+				mChatService.start();
+			}
+		}
+	}
+
+	private void setupChat() {
+		Log.d(TAG, "setupChat()");
+		// Initialize the array adapter for the conversation thread
+		mPollArrayAdapter = new ArrayAdapter<String>(this, R.layout.message);
+		mPollsView = (ListView) findViewById(R.id.foundPolls);
+		mPollsView.setAdapter(mPollArrayAdapter);
+
+		initiateFind = (Button) findViewById(R.id.initiateFind);
+
+		initiateFind.setOnClickListener(new OnClickListener() {
+			public void onClick(View view) {
+				// people can't find the poll if you're not discoverable
+				Intent serverIntent = new Intent(InteractPollActivity.this, FindPollActivity.class);
+				startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
+			}
+		});
+
+		// Initialize the BluetoothChatService to perform bluetooth connections
+		mChatService = new BluetoothChatService(this, mHandler);
+
+		// Initialize the buffer for outgoing messages
+		mOutStringBuffer = new StringBuffer("");
+	}
+
+	@Override
+	public synchronized void onPause() {
+		super.onPause();
+		Log.e(TAG, "- ON PAUSE -");
+	}
+
+	@Override
+	public void onStop() {
+		super.onStop();
+		Log.e(TAG, "-- ON STOP --");
+	}
+
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		// Stop the Bluetooth chat services
+		if (mChatService != null)
+			mChatService.stop();
+		Log.e(TAG, "--- ON DESTROY ---");
+	}
 
 	// The Handler that gets information back from the BluetoothChatService
 	private final Handler mHandler = new Handler() {
@@ -74,7 +172,7 @@ public class InteractPollActivity extends Activity {
 			case MESSAGE_STATE_CHANGE:
 				Log.i(TAG, "Handler is MESSAGE_STATE_CHANGE: " + msg.arg1);
 				switch (msg.arg1) {
-				case STATE_CONNECTED:
+				case BluetoothChatService.STATE_CONNECTED:
 					Log.d(TAG, "Handler is STATE_CONNECTED!!!!!!!!!!");
 					mTitle.setText(R.string.title_connected_to);
 					mTitle.append(cutToEightChars(mConnectedDeviceName));
@@ -86,12 +184,12 @@ public class InteractPollActivity extends Activity {
 
 					mPollArrayAdapter.clear();
 					break;
-				case STATE_CONNECTING:
+				case BluetoothChatService.STATE_CONNECTING:
 					Log.d(TAG, "Handler is STATE_CONNECTING");
 					mTitle.setText(R.string.title_connecting);
 					break;
-				case STATE_LISTEN:
-				case STATE_NONE:
+				case BluetoothChatService.STATE_LISTEN:
+				case BluetoothChatService.STATE_NONE:
 					Log.d(TAG, "Handler is STATE_NONE");
 					mTitle.setText(R.string.title_not_connected);
 					title = (TextView) findViewById(R.id.otherPollNames);
@@ -118,8 +216,8 @@ public class InteractPollActivity extends Activity {
 				// save the connected device's name
 				mConnectedDeviceName = msg.getData().getString(DEVICE_NAME);
 				Toast.makeText(getApplicationContext(),
-						"Connected to " + cutToEightChars(mConnectedDeviceName),
-						Toast.LENGTH_SHORT).show();
+						"Connected to " + cutToEightChars(mConnectedDeviceName), Toast.LENGTH_SHORT)
+						.show();
 				break;
 			case MESSAGE_TOAST:
 				Toast.makeText(getApplicationContext(), msg.getData().getString(TOAST),
@@ -136,36 +234,6 @@ public class InteractPollActivity extends Activity {
 			newName = s.substring(0, 8);
 		}
 		return newName;
-	}
-
-	private TextView title;
-
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-
-		initLayout();
-
-		Log.d(TAG, "in on Create");
-
-		// Get the local Bluetooth adapter
-		mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-	}
-
-	@Override
-	public void onStart() {
-		super.onStart();
-		Log.d(TAG, "++ ON START ++");
-
-		// If BT is not on, request that it be enabled.
-		// setupChat() will then be called during onActivityResult
-		if (!mBluetoothAdapter.isEnabled()) {
-			Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-			startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
-			// Otherwise, setup the session
-		} else {
-			setupChat();
-		}
 	}
 
 	private void processPollsReceived(String readMessage) {
@@ -208,76 +276,6 @@ public class InteractPollActivity extends Activity {
 		sendMessage(pollCsv);
 
 		Log.d(TAG, "sent the polls");
-	}
-
-	private void setupChat() {
-		Log.d(TAG, "setupChat()");
-		// Initialize the array adapter for the conversation thread
-		mPollArrayAdapter = new ArrayAdapter<String>(this, R.layout.message);
-		mPollsView = (ListView) findViewById(R.id.foundPolls);
-		mPollsView.setAdapter(mPollArrayAdapter);
-
-		//		// Initialize the compose field with a listener for the return key
-		//		mOutEditText = (EditText) findViewById(R.id.edit_text_out);
-		//		mOutEditText.setOnEditorActionListener(mWriteListener);
-		//
-		//		// Initialize the send button with a listener that for click events
-		//		mSendButton = (Button) findViewById(R.id.button_send);
-		//		mSendButton.setOnClickListener(new OnClickListener() {
-		//			public void onClick(View v) {
-		//				// Send a message using content of the edit text widget
-		//				TextView view = (TextView) findViewById(R.id.edit_text_out);
-		//				String message = view.getText().toString();
-		//				sendMessage(message);
-		//			}
-		//		});
-
-		// Initialize the BluetoothChatService to perform bluetooth connections
-		mChatService = new BluetoothChatService(this, mHandler);
-
-		// Initialize the buffer for outgoing messages
-		mOutStringBuffer = new StringBuffer("");
-	}
-
-	@Override
-	public synchronized void onResume() {
-		super.onResume();
-		Log.d(TAG, "+ ON RESUME +");
-
-		// Performing this check in onResume() covers the case in which BT was
-		// not enabled during onStart(), so we were paused to enable it...
-		// onResume() will be called when ACTION_REQUEST_ENABLE activity returns.
-		if (mChatService != null) {
-			// Only if the state is STATE_NONE, do we know that we haven't started already
-			if (mChatService.getState() == BluetoothChatService.STATE_NONE) {
-				// Start the Bluetooth chat services
-				mChatService.start();
-			}
-		}
-
-	}
-
-	private void initLayout() {
-		// Set up the window layout
-		requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
-		setContentView(R.layout.activity_interact);
-		getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.custom_title);
-
-		// Set up the custom title
-		mTitle = (TextView) findViewById(R.id.title_left_text);
-		mTitle.setText(R.string.app_name);
-		mTitle = (TextView) findViewById(R.id.title_right_text);
-
-		initiateFind = (Button) findViewById(R.id.initiateFind);
-		initiateFind = (Button) findViewById(R.id.initiateFind);
-
-		initiateFind.setOnClickListener(new OnClickListener() {
-			public void onClick(View view) {
-				// people can't find the poll if you're not discoverable
-				Intent serverIntent = new Intent(InteractPollActivity.this, FindPollActivity.class);
-				startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
-			}
-		});
 	}
 
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
