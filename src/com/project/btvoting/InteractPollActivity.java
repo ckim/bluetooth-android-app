@@ -1,7 +1,5 @@
 package com.project.btvoting;
 
-import java.util.ArrayList;
-
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -58,9 +56,6 @@ public class InteractPollActivity extends Activity {
 
 	private static String REQUEST_POLLS_LIST = "reqpolls";
 
-	Boolean isRequestor = false;
-	Boolean receivedPolls = false;
-
 	// Intent request codes
 	public static final int REQUEST_CONNECT_DEVICE = 1;
 	private static final int REQUEST_ENABLE_BT = 2;
@@ -81,21 +76,15 @@ public class InteractPollActivity extends Activity {
 				switch (msg.arg1) {
 				case STATE_CONNECTED:
 					Log.d(TAG, "Handler is STATE_CONNECTED!!!!!!!!!!");
-
-					mPollArrayAdapter.clear();
-
 					mTitle.setText(R.string.title_connected_to);
 					mTitle.append(mConnectedDeviceName);
 
 					title = (TextView) findViewById(R.id.otherPollNames);
 					title.setText(mConnectedDeviceName + "'s polls");
 
-					Log.d(TAG, "isRequestor is " + isRequestor);
+					getPollsFromOtherDevice();
 
-					if (!isRequestor) {
-						sendPolls();
-					}
-
+					mPollArrayAdapter.clear();
 					break;
 				case STATE_CONNECTING:
 					Log.d(TAG, "Handler is STATE_CONNECTING");
@@ -112,23 +101,18 @@ public class InteractPollActivity extends Activity {
 				byte[] writeBuf = (byte[]) msg.obj;
 				// construct a string from the buffer
 				String writeMessage = new String(writeBuf);
-				Log.d(TAG, "writing the message " + writeMessage);
-				Log.d(TAG, "isRequestor is " + isRequestor);
 				mPollArrayAdapter.add("Me:  " + writeMessage);
 				break;
 			case MESSAGE_READ:
 				byte[] readBuf = (byte[]) msg.obj;
 				// construct a string from the valid bytes in the buffer
 				String readMessage = new String(readBuf, 0, msg.arg1);
-				Log.d(TAG, "reading the message " + readMessage);
-				Log.d(TAG, "isRequestor is " + isRequestor);
 
-				if (isRequestor && !receivedPolls) {
-					receivedPolls = true;
-					processPollsReceived(readMessage);
-				} else {
-					mPollArrayAdapter.add(mConnectedDeviceName + ":  " + readMessage);
+				if (readMessage.equals(REQUEST_POLLS_LIST)) {
+					Log.d(TAG, "OHMIGAWD POLLS REQUEST SUCCESSFULLY TRANSMITTED!!!!");
 				}
+
+				mPollArrayAdapter.add(mConnectedDeviceName + ":  " + readMessage);
 				break;
 			case MESSAGE_DEVICE_NAME:
 				// save the connected device's name
@@ -143,46 +127,13 @@ public class InteractPollActivity extends Activity {
 			}
 		}
 
-		private void processPollsReceived(String readMessage) {
-			mPollArrayAdapter.add(mConnectedDeviceName);
-			String[] polls = readMessage.split(":");
-			for (String string : polls) {
-				mPollArrayAdapter.add(string);
-			}
-		}
-
 	};
 
 	private TextView title;
 
-	private void sendPolls() {
-		ArrayList<String> pollNames = new ArrayList<String>();
-		ArrayList<String> options = new ArrayList<String>();
-
-		String pollCsv = "";
-
-		// load the list of poll names to view
-		CreatePollActivity.loadArray(MainActivity.POLL_NAMES, pollNames, getBaseContext());
-
-		for (String name : pollNames) {
-			pollCsv.concat(name + ",");
-			// load the poll options
-			CreatePollActivity.loadArray(name, options, getBaseContext());
-			for (String s : options) {
-				pollCsv.concat(s + ",");
-			}
-			pollCsv.concat(":");
-			pollCsv.replace(",:", ":");
-		}
-		// send them
-		sendMessage(pollCsv);
-
-		Log.d(TAG, "sent the polls");
-	}
-
-	private void sendSomething(String s) {
+	private void getPollsFromOtherDevice() {
 		// request them
-		sendMessage(s);
+		sendMessage(REQUEST_POLLS_LIST);
 		// get them back
 		// put them in mPollArrayAdapter
 	}
@@ -278,8 +229,6 @@ public class InteractPollActivity extends Activity {
 
 		initiateFind.setOnClickListener(new OnClickListener() {
 			public void onClick(View view) {
-				Log.d(TAG, "Setting isRequestor to true!!!");
-				isRequestor = true;
 				// people can't find the poll if you're not discoverable
 				Intent serverIntent = new Intent(InteractPollActivity.this, FindPollActivity.class);
 				startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
