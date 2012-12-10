@@ -13,6 +13,8 @@ import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
@@ -56,6 +58,9 @@ public class InteractPollActivity extends Activity {
 	private BluetoothChatService mChatService = null;
 
 	private TextView title;
+
+	private Boolean isRequestor = false;
+	private Boolean pollsSent = false;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -129,6 +134,7 @@ public class InteractPollActivity extends Activity {
 		initiateFind.setOnClickListener(new OnClickListener() {
 			public void onClick(View view) {
 				// people can't find the poll if you're not discoverable
+				isRequestor = true;
 				Intent serverIntent = new Intent(InteractPollActivity.this, FindPollActivity.class);
 				startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
 			}
@@ -174,13 +180,20 @@ public class InteractPollActivity extends Activity {
 				switch (msg.arg1) {
 				case BluetoothChatService.STATE_CONNECTED:
 					Log.d(TAG, "Handler is STATE_CONNECTED!!!!!!!!!!");
+
 					mTitle.setText(R.string.title_connected_to);
 					mTitle.append(cutToEightChars(mConnectedDeviceName));
 
-					title = (TextView) findViewById(R.id.otherPollNames);
-					title.setText(cutToEightChars(mConnectedDeviceName) + "'s polls");
-
-					sendPolls();
+					if (!isRequestor) {
+						Log.d(TAG, "sent polls as requestee");
+						if (!pollsSent) {
+							sendPolls();
+						}
+					} else {
+						Log.d(TAG, "is requestor");
+						title = (TextView) findViewById(R.id.otherPollNames);
+						title.setText(cutToEightChars(mConnectedDeviceName) + "'s polls");
+					}
 
 					mPollArrayAdapter.clear();
 					break;
@@ -207,7 +220,6 @@ public class InteractPollActivity extends Activity {
 				byte[] readBuf = (byte[]) msg.obj;
 				// construct a string from the valid bytes in the buffer
 				String readMessage = new String(readBuf, 0, msg.arg1);
-
 				processPollsReceived(readMessage);
 				//				mPollArrayAdapter.add(mConnectedDeviceName + ":  " + readMessage);
 
@@ -238,15 +250,12 @@ public class InteractPollActivity extends Activity {
 
 	private void processPollsReceived(String readMessage) {
 		String[] polls = readMessage.split(":");
-		mPollArrayAdapter.add("polls");
 		for (String string : polls) {
 			String poll = "";
 			String[] options = string.split(",");
-			//			mPollArrayAdapter.add(options[0]);
-			poll.concat(options[0]);
+			poll = poll.concat(options[0] + "\n");
 			for (int i = 1; i < options.length; i++) {
-				//				mPollArrayAdapter.add("\t" + options[i]);
-				poll.concat("\t" + options[i]);
+				poll = poll.concat("\t" + options[i] + "\n");
 			}
 			mPollArrayAdapter.add(poll);
 		}
@@ -333,4 +342,16 @@ public class InteractPollActivity extends Activity {
 			//            mOutEditText.setText(mOutStringBuffer);
 		}
 	}
+
+	// The on-click listener for all devices in the poll ListViews
+	private OnItemClickListener mDeviceClickListener = new OnItemClickListener() {
+		public void onItemClick(AdapterView<?> av, View v, int arg2, long arg3) {
+			// open up a dialog with the poll name and the poll options
+			// when the user selects one of the options
+			// send a message to the requestee the poll name 
+			// and number that was picked (0...n)
+			// if the requestee receives a string/number thing
+			// it will append one to the count of that poll's number choice
+		}
+	};
 }
