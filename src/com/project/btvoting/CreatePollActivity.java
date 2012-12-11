@@ -85,7 +85,7 @@ public class CreatePollActivity extends Activity {
 					saveArray(pollName, options, getBaseContext());
 
 					// initialize counts
-					for (String choice : options) {
+					for (int i = 0; i < options.size(); i++) {
 						counts.add(0);
 					}
 					// persist the poll counts
@@ -114,12 +114,17 @@ public class CreatePollActivity extends Activity {
 				Editable text = editOptionName.getText();
 				// only do it if an option has been entered
 				if (text.length() > 0) {
-					options.add(text.toString());
-					TextView tv = new TextView(getBaseContext());
-					tv.setText(options.size() + ".\t" + text);
-					tv.setTextColor(Color.BLACK);
-					pollOptions.addView(tv, LinearLayout.LayoutParams.WRAP_CONTENT);
-					editOptionName.setText("");
+					if (options.size() > 5) {
+						Toast.makeText(getBaseContext(), "Polls are limited to 5 options",
+								Toast.LENGTH_SHORT).show();
+					} else {
+						options.add(text.toString());
+						TextView tv = new TextView(getBaseContext());
+						tv.setText(options.size() + ".\t" + text);
+						tv.setTextColor(Color.BLACK);
+						pollOptions.addView(tv, LinearLayout.LayoutParams.WRAP_CONTENT);
+						editOptionName.setText("");
+					}
 				}
 			}
 		});

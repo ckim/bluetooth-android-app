@@ -16,10 +16,10 @@ import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Display;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -54,12 +54,15 @@ public class ViewPollActivity extends Activity {
 		// load the list of poll names to view
 		CreatePollActivity.loadArray(MainActivity.POLL_NAMES, pollNames, getBaseContext());
 
-		Boolean pale = true;
-
 		for (String name : pollNames) {
 			LinearLayout box = new LinearLayout(getBaseContext());
-			box.setOrientation(LinearLayout.VERTICAL);
+			box.setOrientation(LinearLayout.HORIZONTAL);
 			pollOptions.addView(box, LinearLayout.LayoutParams.WRAP_CONTENT);
+
+			LinearLayout innerBox = new LinearLayout(getBaseContext());
+			innerBox.setOrientation(LinearLayout.VERTICAL);
+			box.addView(innerBox, LinearLayout.LayoutParams.WRAP_CONTENT);
+
 			// load the poll options
 			CreatePollActivity.loadArray(name, options, getBaseContext());
 
@@ -70,51 +73,44 @@ public class ViewPollActivity extends Activity {
 			TextView tv = new TextView(getBaseContext());
 			tv.setTextColor(Color.BLACK);
 			tv.setText(name);
-			if (pale) {
-				box.setBackgroundColor(Color.TRANSPARENT);
-			} else {
-				box.setBackgroundColor(Color.LTGRAY);
-			}
 
 			// add poll name
-			box.addView(tv, LinearLayout.LayoutParams.WRAP_CONTENT);
+			innerBox.addView(tv, LinearLayout.LayoutParams.WRAP_CONTENT);
+			innerBox.setMinimumHeight(200);
+
+			//get screen size
+			Display display = getWindowManager().getDefaultDisplay();
+			@SuppressWarnings("deprecation")
+			int width = display.getWidth(); // deprecated
 
 			// add each option
 			for (int i = 0; i < options.size(); i++) {
 				tv = new TextView(getBaseContext());
+				tv.setWidth(width / 2);
 				tv.setTextColor(Color.BLACK);
-				tv.setText("\t" + (i + 1) + ") " + options.get(i) + "\t\t (" + counts.get(i) + ")");
-				box.addView(tv, LinearLayout.LayoutParams.WRAP_CONTENT);
-			}
-			pale = !pale;
-
-			box.setOnClickListener(new OnClickListener() {
-				public void onClick(View v) {
-					TextView theNameTV = (TextView) ((LinearLayout) v).getChildAt(0);
-					final String name = theNameTV.getText().toString();
-
-					String theUrl = getGraphUrl(name);
-
-					ImageView iv = new ImageView(getBaseContext());
-
-					Log.d(TAG, "THE URL IS " + theUrl);
-
-					new DownloadImageTask(iv).execute(theUrl);
-
-					((LinearLayout) v).addView(iv, LinearLayout.LayoutParams.WRAP_CONTENT);
-
-					//					URL url = new URL(
-					//							"http://image10.bizrate-images.com/resize?sq=60&uid=2216744464");
-					//					Bitmap bmp = BitmapFactory.decodeStream(url.openConnection().getInputStream());
-					//					imageView.setImageBitmap(bmp);
-					// https://chart.googleapis.com/chart?cht=p3&chd=t:60,40&chs=250x100&chl=Hello|World
+				String option = options.get(i);
+				if (option.length() > 17) {
+					option = option.substring(0, 17);
+					option = option.concat("...");
 				}
-			});
+				tv.setText("\t" + (i + 1) + ") " + option + "\t\t (" + counts.get(i) + ")");
+				innerBox.addView(tv, LinearLayout.LayoutParams.WRAP_CONTENT);
+			}
+			//			pale = !pale;
+
+			String theUrl = getGraphUrl(name);
+			ImageView iv = new ImageView(getBaseContext());
+			new DownloadImageTask(iv).execute(theUrl);
+			LinearLayout.LayoutParams lay = new LinearLayout.LayoutParams(
+					LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
+			iv.setLayoutParams(lay);
+			iv.setMaxWidth(width / 2);
+			box.addView(iv, LinearLayout.LayoutParams.WRAP_CONTENT);
 
 			box.setOnLongClickListener(new OnLongClickListener() {
-
 				public boolean onLongClick(final View v) {
-					TextView theNameTV = (TextView) ((LinearLayout) v).getChildAt(0);
+					LinearLayout innerBox = (LinearLayout) ((LinearLayout) v).getChildAt(0);
+					TextView theNameTV = (TextView) ((LinearLayout) innerBox).getChildAt(0);
 					final String name = theNameTV.getText().toString();
 					AlertDialog.Builder ad = new AlertDialog.Builder(ViewPollActivity.this);
 					ad.setTitle("Delete poll");
@@ -131,16 +127,6 @@ public class ViewPollActivity extends Activity {
 									getBaseContext());
 							// remove poll views
 							pollOptions.removeView(v);
-							// recolor the background
-							Boolean light = true;
-							for (int i = 0; i < pollOptions.getChildCount(); i++) {
-								int color = Color.TRANSPARENT;
-								if (!light) {
-									color = Color.LTGRAY;
-								}
-								pollOptions.getChildAt(i).setBackgroundColor(color);
-								light = !light;
-							}
 						}
 					});
 					ad.setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -177,6 +163,8 @@ public class ViewPollActivity extends Activity {
 		//load the options
 		CreatePollActivity.loadArray(name, opts, getBaseContext());
 		for (String string : opts) {
+			string = string.replaceAll("[^A-Za-z0-9]", "");
+			string = string.replaceAll("[ ]", "%20");
 			urlString = urlString.concat(string + "|");
 		}
 

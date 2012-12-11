@@ -6,7 +6,7 @@
     <string name="title_activity_main">A Voting App 0.1</string>
     <string name="buttonCreateNewPoll">Create a new poll</string>
     <string name="buttonCreatePoll">Create poll</string>
-    <string name="buttonFindPolls">Find nearby polls</string>
+    <string name="buttonFindPolls">Connect with nearby polls</string>
      <string name="buttonInitiateFind">Choose a device</string>
     <string name="enterPollName">Enter Poll Name</string>
     <string name="enterOptionName">Enter Option Name</string>
@@ -15,7 +15,7 @@
     <string name="AddPollOption">Add new poll option</string>
     <string name="discoverable">Make discoverable</string>
     <string name="returnToMain">Return to main screen</string>
-    <string name="listOfPolls">Your Own Polls</string>
+    <string name="listOfPolls">Your Polls</string>
     <string name="otherPollNames">Discovered Polls</string>
 
     <!-- BluetoothChat -->
