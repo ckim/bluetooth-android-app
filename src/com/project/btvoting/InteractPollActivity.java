@@ -405,10 +405,14 @@ public class InteractPollActivity extends Activity {
 
 		ArrayList<Integer> counts = new ArrayList<Integer>();
 		ArrayList<String> responders = new ArrayList<String>();
+		ArrayList<String> options = new ArrayList<String>();
 
 		// now make the same device id not vote twice
 		CreatePollActivity.loadArray((name + MainActivity.POLL_RESPONDERS), responders,
 				getBaseContext());
+
+		// load the options
+		CreatePollActivity.loadArray(name, options, getBaseContext());
 
 		// if their name is already in the list, uh oh
 		if (responders.contains(mConnectedDeviceName)) {
@@ -418,9 +422,6 @@ public class InteractPollActivity extends Activity {
 			// it will append one to the count of that poll's number choice	
 			CreatePollActivity.loadIntArray((name + MainActivity.POLL_COUNTS), counts,
 					getBaseContext());
-			for (Integer integer : counts) {
-				Log.d(TAG, "counts is " + integer);
-			}
 
 			int count = counts.get(choice);
 			int newCount = count + 1;
@@ -429,15 +430,12 @@ public class InteractPollActivity extends Activity {
 			CreatePollActivity.saveIntArray((name + MainActivity.POLL_COUNTS), counts,
 					getBaseContext());
 
-			CreatePollActivity.loadIntArray((name + MainActivity.POLL_COUNTS), counts,
-					getBaseContext());
-			for (Integer integer : counts) {
-				Log.d(TAG, "counts is now " + integer);
-			}
-
 			responders.add(mConnectedDeviceName);
 			CreatePollActivity.saveArray((name + MainActivity.POLL_RESPONDERS), responders,
 					getBaseContext());
+
+			mPollArrayAdapter.add(cutToEightChars(mConnectedDeviceName) + " voted for "
+					+ options.get(choice) + " in " + name);
 		}
 
 	}
