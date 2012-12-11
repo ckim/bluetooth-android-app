@@ -10,7 +10,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -26,6 +25,7 @@ public class ViewPollActivity extends Activity {
 	int numPolls;
 	protected LinearLayout pollOptions;
 	protected List<String> options;
+	protected List<Integer> counts;
 	protected List<String> pollNames;
 	protected String pollName;
 	TextView topName;
@@ -34,6 +34,7 @@ public class ViewPollActivity extends Activity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		options = new ArrayList<String>();
+		counts = new ArrayList<Integer>();
 		pollNames = new ArrayList<String>();
 		pollName = "";
 		initLayout();
@@ -55,6 +56,11 @@ public class ViewPollActivity extends Activity {
 			pollOptions.addView(box, LinearLayout.LayoutParams.WRAP_CONTENT);
 			// load the poll options
 			CreatePollActivity.loadArray(name, options, getBaseContext());
+
+			// load the poll counts
+			CreatePollActivity.loadIntArray((name + MainActivity.POLL_COUNTS), counts,
+					getBaseContext());
+
 			TextView tv = new TextView(getBaseContext());
 			tv.setTextColor(Color.BLACK);
 			tv.setText(name);
@@ -68,11 +74,10 @@ public class ViewPollActivity extends Activity {
 			box.addView(tv, LinearLayout.LayoutParams.WRAP_CONTENT);
 
 			// add each option
-			for (String o : options) {
+			for (int i = 0; i < options.size(); i++) {
 				tv = new TextView(getBaseContext());
 				tv.setTextColor(Color.BLACK);
-				tv.setTypeface(null, Typeface.ITALIC);
-				tv.setText("\t" + o);
+				tv.setText("\t" + (i + 1) + ") " + options.get(i) + "\t (" + counts.get(i) + ")");
 				box.addView(tv, LinearLayout.LayoutParams.WRAP_CONTENT);
 			}
 			pale = !pale;
@@ -151,7 +156,7 @@ public class ViewPollActivity extends Activity {
 
 	public boolean saveArray(String key, List<String> options) {
 		SharedPreferences prefs = getApplicationContext().getSharedPreferences(
-				MainActivity.POLL_OPTIONS, Context.MODE_PRIVATE);
+				MainActivity.POLL_PREFS, Context.MODE_PRIVATE);
 		SharedPreferences.Editor editor = prefs.edit();
 		// I don't think you need to remove first but oh well
 		editor.remove(key + "Size"); // remove what might be there

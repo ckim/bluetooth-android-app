@@ -34,12 +34,14 @@ public class CreatePollActivity extends Activity {
 	protected EditText editOptionName;
 	protected List<String> options;
 	protected List<String> pollNames;
+	protected List<Integer> counts;
 	protected String pollName;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		options = new ArrayList<String>();
+		counts = new ArrayList<Integer>();
 		pollNames = new ArrayList<String>();
 		pollName = "";
 		initLayout();
@@ -65,41 +67,44 @@ public class CreatePollActivity extends Activity {
 				// if the name isn't long enough, reject it
 				pollName = editPollName.getText().toString();
 				if (pollName.length() < 1) {
-					Toast.makeText(getBaseContext(), "Missing poll name!",
-							Toast.LENGTH_SHORT).show();
+					Toast.makeText(getBaseContext(), "Missing poll name!", Toast.LENGTH_SHORT)
+							.show();
 					// if there aren't at least two options, reject
 				} else if (options.size() < 2) {
-					Toast.makeText(getBaseContext(),
-							"Need at least two poll options!",
+					Toast.makeText(getBaseContext(), "Need at least two poll options!",
 							Toast.LENGTH_SHORT).show();
 					// if the name is in use, reject
 				} else if (pollNames.contains(pollName)) {
-					Toast.makeText(getBaseContext(),
-							"That poll name is already in use!",
+					Toast.makeText(getBaseContext(), "That poll name is already in use!",
 							Toast.LENGTH_SHORT).show();
 				} else {
-					Log.d("CreatePoll", "pollName is " + pollName
-							+ " and there are " + options.size() + " options");
-					// persist the poll
+					Log.d("CreatePoll",
+							"pollName is " + pollName + " and there are " + options.size()
+									+ " options");
+					// persist the poll options
 					saveArray(pollName, options, getBaseContext());
+
+					// initialize counts
+					for (String choice : options) {
+						counts.add(0);
+					}
+					// persist the poll counts
+					saveIntArray(pollName + MainActivity.POLL_COUNTS, counts, getBaseContext());
+
 					pollNames.add(pollName);
-					Log.d(TAG, "pollNames after creation is length "
-							+ pollNames.size());
+					Log.d(TAG, "pollNames after creation is length " + pollNames.size());
 					// persist the list of polls
-					Boolean saved = saveArray(MainActivity.POLL_NAMES,
-							pollNames, getBaseContext());
+					Boolean saved = saveArray(MainActivity.POLL_NAMES, pollNames, getBaseContext());
 					if (saved) {
 						options.clear();
-						Toast.makeText(getBaseContext(),
-								"Poll \"" + pollName + "\" created!",
+						Toast.makeText(getBaseContext(), "Poll \"" + pollName + "\" created!",
 								Toast.LENGTH_SHORT).show();
 						// clear all the poll boxes
 						editPollName.setText("");
 						pollOptions.removeViews(0, pollOptions.getChildCount());
 					} else {
-						Toast.makeText(getBaseContext(),
-								"Error while saving poll", Toast.LENGTH_SHORT)
-								.show();
+						Toast.makeText(getBaseContext(), "Error while saving poll",
+								Toast.LENGTH_SHORT).show();
 					}
 				}
 			}
@@ -113,18 +118,16 @@ public class CreatePollActivity extends Activity {
 					TextView tv = new TextView(getBaseContext());
 					tv.setText(options.size() + ".\t" + text);
 					tv.setTextColor(Color.BLACK);
-					pollOptions.addView(tv,
-							LinearLayout.LayoutParams.WRAP_CONTENT);
+					pollOptions.addView(tv, LinearLayout.LayoutParams.WRAP_CONTENT);
 					editOptionName.setText("");
 				}
 			}
 		});
 	}
 
-	static public boolean saveArray(String key, List<String> options,
-			Context context) {
-		SharedPreferences prefs = context.getSharedPreferences(
-				MainActivity.POLL_OPTIONS, Context.MODE_PRIVATE);
+	static public boolean saveArray(String key, List<String> options, Context context) {
+		SharedPreferences prefs = context.getSharedPreferences(MainActivity.POLL_PREFS,
+				Context.MODE_PRIVATE);
 		SharedPreferences.Editor editor = prefs.edit();
 		// I don't think you need to remove first but oh well
 		editor.remove(key + "Size"); // remove what might be there
@@ -138,11 +141,26 @@ public class CreatePollActivity extends Activity {
 		return editor.commit();
 	}
 
+	static public boolean saveIntArray(String key, List<Integer> options, Context context) {
+		SharedPreferences prefs = context.getSharedPreferences(MainActivity.POLL_PREFS,
+				Context.MODE_PRIVATE);
+		SharedPreferences.Editor editor = prefs.edit();
+		// I don't think you need to remove first but oh well
+		editor.remove(key + "Size"); // remove what might be there
+		editor.putInt(key + "Size", options.size());
+
+		for (int i = 0; i < options.size(); i++) {
+			editor.remove(key + i); // remove what might be there
+			editor.putInt(key + i, options.get(i)); // put the right thing
+		}
+
+		return editor.commit();
+	}
+
 	// retrieves a String array List
-	static public void loadArray(String key, List<String> options,
-			Context context) {
-		SharedPreferences prefs = context.getSharedPreferences(
-				MainActivity.POLL_OPTIONS, Context.MODE_PRIVATE);
+	static public void loadArray(String key, List<String> options, Context context) {
+		SharedPreferences prefs = context.getSharedPreferences(MainActivity.POLL_PREFS,
+				Context.MODE_PRIVATE);
 		if (options != null)
 			options.clear(); // remove what might be there
 
@@ -150,6 +168,25 @@ public class CreatePollActivity extends Activity {
 
 		for (int i = 0; i < size; i++) {
 			options.add(prefs.getString(key + i, null));
+
+		}
+	}
+
+	// retrieves a String array List
+	static public void loadIntArray(String key, List<Integer> counts, Context context) {
+		SharedPreferences prefs = context.getSharedPreferences(MainActivity.POLL_PREFS,
+				Context.MODE_PRIVATE);
+		if (counts != null) {
+			counts.clear(); // remove what might be there
+		} else {
+			counts = new ArrayList<Integer>();
+		}
+
+		int size = prefs.getInt(key + "Size", 0);
+
+		for (int i = 0; i < size; i++) {
+			int value = prefs.getInt(key + i, 0);
+			counts.add(value);
 
 		}
 	}
@@ -164,8 +201,7 @@ public class CreatePollActivity extends Activity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case R.id.returnToMain:
-			Intent myIntent = new Intent(CreatePollActivity.this,
-					MainActivity.class);
+			Intent myIntent = new Intent(CreatePollActivity.this, MainActivity.class);
 			CreatePollActivity.this.startActivity(myIntent);
 			return true;
 		}

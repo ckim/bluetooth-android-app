@@ -17,8 +17,9 @@ public class MainActivity extends Activity {
 
 	private static final String TAG = "MainActivity";
 
-	static final String POLL_OPTIONS = "pollOptions";
+	static final String POLL_PREFS = "pollPrefs";
 	static final String POLL_NAMES = "pollNames";
+	protected static final String POLL_COUNTS = "pollCounts";
 
 	private static final int REQUEST_ENABLE_BT = 2;
 
