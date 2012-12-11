@@ -44,6 +44,8 @@ public class InteractPollActivity extends Activity {
 	public static final int REQUEST_CONNECT_DEVICE = 1;
 	private static final int REQUEST_ENABLE_BT = 2;
 
+	private static final String DUPLICATE = "duplicate";
+
 	// Layout Views
 	private TextView mTitle;
 	private ListView mPollsView;
@@ -233,6 +235,11 @@ public class InteractPollActivity extends Activity {
 					processPollsReceived(readMessage);
 				} else if (!isRequestor) {
 					receivePollChoice(readMessage);
+				} else if (isRequestor) {
+					if (readMessage.equals(DUPLICATE)) {
+						Toast.makeText(getApplicationContext(),
+								"You have already voted on this poll!", Toast.LENGTH_SHORT).show();
+					}
 				}
 				//				mPollArrayAdapter.add(mConnectedDeviceName + ":  " + readMessage);
 
@@ -397,26 +404,42 @@ public class InteractPollActivity extends Activity {
 		Log.d(TAG, "poll name is " + name);
 
 		ArrayList<Integer> counts = new ArrayList<Integer>();
+		ArrayList<String> responders = new ArrayList<String>();
 
-		// it will append one to the count of that poll's number choice	
-		CreatePollActivity
-				.loadIntArray((name + MainActivity.POLL_COUNTS), counts, getBaseContext());
-		for (Integer integer : counts) {
-			Log.d(TAG, "counts is " + integer);
+		// now make the same device id not vote twice
+		CreatePollActivity.loadArray((name + MainActivity.POLL_RESPONDERS), responders,
+				getBaseContext());
+
+		// if their name is already in the list, uh oh
+		if (responders.contains(mConnectedDeviceName)) {
+			sendMessage(DUPLICATE);
+		} else {
+
+			// it will append one to the count of that poll's number choice	
+			CreatePollActivity.loadIntArray((name + MainActivity.POLL_COUNTS), counts,
+					getBaseContext());
+			for (Integer integer : counts) {
+				Log.d(TAG, "counts is " + integer);
+			}
+
+			int count = counts.get(choice);
+			int newCount = count + 1;
+			Log.d(TAG, "newCount is " + newCount);
+			counts.set(choice, newCount);
+			CreatePollActivity.saveIntArray((name + MainActivity.POLL_COUNTS), counts,
+					getBaseContext());
+
+			CreatePollActivity.loadIntArray((name + MainActivity.POLL_COUNTS), counts,
+					getBaseContext());
+			for (Integer integer : counts) {
+				Log.d(TAG, "counts is now " + integer);
+			}
+
+			responders.add(mConnectedDeviceName);
+			CreatePollActivity.saveArray((name + MainActivity.POLL_RESPONDERS), responders,
+					getBaseContext());
 		}
 
-		int count = counts.get(choice);
-		int newCount = count + 1;
-		Log.d(TAG, "newCount is " + newCount);
-		counts.set(choice, newCount);
-		CreatePollActivity
-				.saveIntArray((name + MainActivity.POLL_COUNTS), counts, getBaseContext());
-
-		CreatePollActivity
-				.loadIntArray((name + MainActivity.POLL_COUNTS), counts, getBaseContext());
-		for (Integer integer : counts) {
-			Log.d(TAG, "counts is now " + integer);
-		}
 	}
 
 	// The on-click listener for all devices in the poll ListViews

@@ -20,6 +20,7 @@ public class MainActivity extends Activity {
 	static final String POLL_PREFS = "pollPrefs";
 	static final String POLL_NAMES = "pollNames";
 	protected static final String POLL_COUNTS = "pollCounts";
+	protected static final String POLL_RESPONDERS = "pollResponders";
 
 	private static final int REQUEST_ENABLE_BT = 2;
 
