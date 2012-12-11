@@ -229,8 +229,10 @@ public class InteractPollActivity extends Activity {
 				String readMessage = new String(readBuf, 0, msg.arg1);
 				Log.d(TAG, "received the message " + readMessage);
 
-				if (isRequestor && pollsReceived) {
+				if (isRequestor && !pollsReceived) {
 					processPollsReceived(readMessage);
+				} else if (!isRequestor) {
+					receivePollChoice(readMessage);
 				}
 				//				mPollArrayAdapter.add(mConnectedDeviceName + ":  " + readMessage);
 
@@ -387,15 +389,22 @@ public class InteractPollActivity extends Activity {
 
 	private void receivePollChoice(String choiceString) {
 		// if the requestee receives a string/number thing
+		Log.d(TAG, "received poll choice " + choiceString); // :) :) :)
 		String[] infos = choiceString.split(" ");
 		String name = infos[0];
-		String choice = infos[1];
+		int choice = Integer.parseInt(infos[1]);
 
 		ArrayList<Integer> counts = new ArrayList<Integer>();
 
 		// it will append one to the count of that poll's number choice	
 		CreatePollActivity
 				.loadIntArray((name + MainActivity.POLL_COUNTS), counts, getBaseContext());
+
+		int count = counts.get(choice);
+		int newCount = count++;
+		counts.set(choice, newCount);
+		CreatePollActivity
+				.saveIntArray((name + MainActivity.POLL_COUNTS), counts, getBaseContext());
 	}
 
 	// The on-click listener for all devices in the poll ListViews
