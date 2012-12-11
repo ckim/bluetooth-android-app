@@ -77,7 +77,7 @@ public class ViewPollActivity extends Activity {
 			for (int i = 0; i < options.size(); i++) {
 				tv = new TextView(getBaseContext());
 				tv.setTextColor(Color.BLACK);
-				tv.setText("\t" + (i + 1) + ") " + options.get(i) + "\t (" + counts.get(i) + ")");
+				tv.setText("\t" + (i + 1) + ") " + options.get(i) + "\t\t (" + counts.get(i) + ")");
 				box.addView(tv, LinearLayout.LayoutParams.WRAP_CONTENT);
 			}
 			pale = !pale;

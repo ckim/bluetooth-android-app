@@ -3,8 +3,10 @@ package com.project.btvoting;
 import java.util.ArrayList;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -61,6 +63,7 @@ public class InteractPollActivity extends Activity {
 
 	private Boolean isRequestor = false;
 	private Boolean pollsSent = false;
+	private Boolean pollsReceived = false;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -124,10 +127,14 @@ public class InteractPollActivity extends Activity {
 
 	private void setupChat() {
 		Log.d(TAG, "setupChat()");
+
 		// Initialize the array adapter for the conversation thread
 		mPollArrayAdapter = new ArrayAdapter<String>(this, R.layout.message);
 		mPollsView = (ListView) findViewById(R.id.foundPolls);
 		mPollsView.setAdapter(mPollArrayAdapter);
+
+		// Find and set up the ListView for paired devices
+		mPollsView.setOnItemClickListener(mDeviceClickListener);
 
 		initiateFind = (Button) findViewById(R.id.initiateFind);
 
@@ -220,7 +227,11 @@ public class InteractPollActivity extends Activity {
 				byte[] readBuf = (byte[]) msg.obj;
 				// construct a string from the valid bytes in the buffer
 				String readMessage = new String(readBuf, 0, msg.arg1);
-				processPollsReceived(readMessage);
+				Log.d(TAG, "received the message " + readMessage);
+
+				if (isRequestor && pollsReceived) {
+					processPollsReceived(readMessage);
+				}
 				//				mPollArrayAdapter.add(mConnectedDeviceName + ":  " + readMessage);
 
 				break;
@@ -252,10 +263,11 @@ public class InteractPollActivity extends Activity {
 		String[] polls = readMessage.split(":");
 		for (String string : polls) {
 			String poll = "";
+			pollsReceived = true;
 			String[] options = string.split(",");
 			poll = poll.concat(options[0] + "\n");
 			for (int i = 1; i < options.length; i++) {
-				poll = poll.concat("\t" + options[i] + "\n");
+				poll = poll.concat("\t" + i + ") " + options[i] + "\n");
 			}
 			mPollArrayAdapter.add(poll);
 		}
@@ -266,6 +278,7 @@ public class InteractPollActivity extends Activity {
 		ArrayList<String> options = new ArrayList<String>();
 
 		String pollCsv = "";
+		pollsSent = true;
 
 		// load the list of poll names to view
 		CreatePollActivity.loadArray(MainActivity.POLL_NAMES, pollNames, getBaseContext());
@@ -333,6 +346,9 @@ public class InteractPollActivity extends Activity {
 
 		// Check that there's actually something to send
 		if (message.length() > 0) {
+
+			Log.d(TAG, "sending the message " + message);
+
 			// Get the message bytes and tell the BluetoothChatService to write
 			byte[] send = message.getBytes();
 			mChatService.write(send);
@@ -343,15 +359,71 @@ public class InteractPollActivity extends Activity {
 		}
 	}
 
+	private String getNameFromPollString(String pollString) {
+		String[] tokens = pollString.split("\n");
+		String name = "";
+		if (tokens.length > 0) {
+			name = tokens[0];
+		}
+		return name;
+	}
+
+	private String[] getChoicesFromPollString(String pollString) {
+		String[] tokens = pollString.split("\n");
+		String[] choices = new String[tokens.length - 1];
+		// the first token is the name
+		// so do all but the first token
+		for (int i = 1; i < tokens.length; i++) {
+			String raw = tokens[i];
+			// the raw choice is "1) xx"
+			// the second bit is the actual choice
+			String[] s = raw.split(" ");
+			String choiceName = s[1];
+			choices[i - 1] = choiceName;
+		}
+
+		return choices;
+	}
+
+	private void receivePollChoice(String choiceString) {
+		// if the requestee receives a string/number thing
+		String[] infos = choiceString.split(" ");
+		String name = infos[0];
+		String choice = infos[1];
+
+		ArrayList<Integer> counts = new ArrayList<Integer>();
+
+		// it will append one to the count of that poll's number choice	
+		CreatePollActivity
+				.loadIntArray((name + MainActivity.POLL_COUNTS), counts, getBaseContext());
+	}
+
 	// The on-click listener for all devices in the poll ListViews
 	private OnItemClickListener mDeviceClickListener = new OnItemClickListener() {
 		public void onItemClick(AdapterView<?> av, View v, int arg2, long arg3) {
+			String pollString = ((TextView) v).getText().toString();
+			final String name = getNameFromPollString(pollString);
+			final String[] items = getChoicesFromPollString(pollString);
+
 			// open up a dialog with the poll name and the poll options
-			// when the user selects one of the options
-			// send a message to the requestee the poll name 
-			// and number that was picked (0...n)
-			// if the requestee receives a string/number thing
-			// it will append one to the count of that poll's number choice
+			AlertDialog.Builder choiceSelection = new AlertDialog.Builder(InteractPollActivity.this);
+			choiceSelection.setTitle(name);
+			choiceSelection.setSingleChoiceItems(items, -1, new DialogInterface.OnClickListener() {
+				// when the user selects one of the options
+				public void onClick(DialogInterface dialog, int item) {
+					// send a message to the requestee the poll name 
+					// and number that was picked (0...n)
+					String message = name + " " + item;
+					sendMessage(message);
+
+					dialog.dismiss();
+					//					Toast.makeText(getApplicationContext(), items[item], Toast.LENGTH_SHORT).show();
+				}
+			});
+
+			AlertDialog alert = choiceSelection.create();
+			alert.show();
 		}
+
 	};
 }
