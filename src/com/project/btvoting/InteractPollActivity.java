@@ -188,10 +188,8 @@ public class InteractPollActivity extends Activity {
 				Log.i(TAG, "Handler is MESSAGE_STATE_CHANGE: " + msg.arg1);
 				switch (msg.arg1) {
 				case BluetoothChatService.STATE_CONNECTED:
-					Log.d(TAG, "Handler is STATE_CONNECTED!!!!!!!!!!");
-
 					mTitle.setText(R.string.title_connected_to);
-					mTitle.append(cutToEightChars(mConnectedDeviceName));
+					mTitle.append(cutToXChars(mConnectedDeviceName, 8));
 
 					if (!isRequestor) {
 						Log.d(TAG, "sent polls as requestee");
@@ -201,7 +199,7 @@ public class InteractPollActivity extends Activity {
 					} else {
 						Log.d(TAG, "is requestor");
 						title = (TextView) findViewById(R.id.otherPollNames);
-						title.setText(cutToEightChars(mConnectedDeviceName) + "'s polls");
+						title.setText(cutToXChars(mConnectedDeviceName, 8) + "'s polls");
 					}
 
 					mPollArrayAdapter.clear();
@@ -248,7 +246,7 @@ public class InteractPollActivity extends Activity {
 				// save the connected device's name
 				mConnectedDeviceName = msg.getData().getString(DEVICE_NAME);
 				Toast.makeText(getApplicationContext(),
-						"Connected to " + cutToEightChars(mConnectedDeviceName), Toast.LENGTH_SHORT)
+						"Connected to " + cutToXChars(mConnectedDeviceName, 8), Toast.LENGTH_SHORT)
 						.show();
 				break;
 			case MESSAGE_TOAST:
@@ -260,10 +258,10 @@ public class InteractPollActivity extends Activity {
 
 	};
 
-	public String cutToEightChars(String s) {
+	public static String cutToXChars(String s, int num) {
 		String newName = s;
-		if (s.length() > 8) {
-			newName = s.substring(0, 8);
+		if (s.length() > num) {
+			newName = s.substring(0, num);
 		}
 		return newName;
 	}
@@ -350,6 +348,7 @@ public class InteractPollActivity extends Activity {
 		// Check that we're actually connected before trying anything
 		if (mChatService.getState() != BluetoothChatService.STATE_CONNECTED) {
 			Toast.makeText(this, R.string.not_connected, Toast.LENGTH_SHORT).show();
+			mPollArrayAdapter.clear();
 			return;
 		}
 
@@ -398,8 +397,9 @@ public class InteractPollActivity extends Activity {
 		// if the requestee receives a string/number thing
 		Log.d(TAG, "received poll choice " + choiceString); // :) :) :)
 		String[] infos = choiceString.split(" ");
-		String name = infos[0];
-		int choice = Integer.parseInt(infos[1]);
+		String mac = infos[0];
+		String name = infos[1];
+		int choice = Integer.parseInt(infos[2]);
 
 		Log.d(TAG, "poll name is " + name);
 
@@ -415,7 +415,7 @@ public class InteractPollActivity extends Activity {
 		CreatePollActivity.loadArray(name, options, getBaseContext());
 
 		// if their name is already in the list, uh oh
-		if (responders.contains(mConnectedDeviceName)) {
+		if (responders.contains(mac)) {
 			sendMessage(DUPLICATE);
 		} else {
 
@@ -430,11 +430,11 @@ public class InteractPollActivity extends Activity {
 			CreatePollActivity.saveIntArray((name + MainActivity.POLL_COUNTS), counts,
 					getBaseContext());
 
-			responders.add(mConnectedDeviceName);
+			responders.add(mac);
 			CreatePollActivity.saveArray((name + MainActivity.POLL_RESPONDERS), responders,
 					getBaseContext());
 
-			mPollArrayAdapter.add(cutToEightChars(mConnectedDeviceName) + " voted for "
+			mPollArrayAdapter.add(cutToXChars(mac, 10) + " voted for "
 					+ options.get(choice) + " in " + name);
 		}
 
@@ -455,7 +455,8 @@ public class InteractPollActivity extends Activity {
 				public void onClick(DialogInterface dialog, int item) {
 					// send a message to the requestee the poll name 
 					// and number that was picked (0...n)
-					String message = name + " " + item;
+					String mac = BluetoothAdapter.getDefaultAdapter().getAddress();
+					String message = mac + " " + name + " " + item;
 					sendMessage(message);
 
 					dialog.dismiss();
