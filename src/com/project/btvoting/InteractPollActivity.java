@@ -394,17 +394,29 @@ public class InteractPollActivity extends Activity {
 		String name = infos[0];
 		int choice = Integer.parseInt(infos[1]);
 
+		Log.d(TAG, "poll name is " + name);
+
 		ArrayList<Integer> counts = new ArrayList<Integer>();
 
 		// it will append one to the count of that poll's number choice	
 		CreatePollActivity
 				.loadIntArray((name + MainActivity.POLL_COUNTS), counts, getBaseContext());
+		for (Integer integer : counts) {
+			Log.d(TAG, "counts is " + integer);
+		}
 
 		int count = counts.get(choice);
-		int newCount = count++;
+		int newCount = count + 1;
+		Log.d(TAG, "newCount is " + newCount);
 		counts.set(choice, newCount);
 		CreatePollActivity
 				.saveIntArray((name + MainActivity.POLL_COUNTS), counts, getBaseContext());
+
+		CreatePollActivity
+				.loadIntArray((name + MainActivity.POLL_COUNTS), counts, getBaseContext());
+		for (Integer integer : counts) {
+			Log.d(TAG, "counts is now " + integer);
+		}
 	}
 
 	// The on-click listener for all devices in the poll ListViews
