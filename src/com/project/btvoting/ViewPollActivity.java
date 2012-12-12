@@ -96,7 +96,6 @@ public class ViewPollActivity extends Activity {
 				tv.setText("\t" + (i + 1) + ") " + option + "\t\t (" + counts.get(i) + ")");
 				innerBox.addView(tv, LinearLayout.LayoutParams.WRAP_CONTENT);
 			}
-			//			pale = !pale;
 
 			String theUrl = getGraphUrl(name);
 			ImageView iv = new ImageView(getBaseContext());

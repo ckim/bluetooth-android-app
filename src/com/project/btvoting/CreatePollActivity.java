@@ -51,8 +51,8 @@ public class CreatePollActivity extends Activity {
 
 	private void initLayout() {
 		setContentView(R.layout.activity_create);
-		addNew = (Button) findViewById(R.id.addPollOption);
 		createPoll = (Button) findViewById(R.id.createPoll2);
+		addNew = (Button) findViewById(R.id.addPollOption);
 		pollOptions = (LinearLayout) findViewById(R.id.pollOptions);
 		editOptionName = (EditText) findViewById(R.id.editOptionName);
 		editPollName = (EditText) findViewById(R.id.editPollName);
@@ -66,6 +66,8 @@ public class CreatePollActivity extends Activity {
 				Log.d(TAG, "pollNames is length " + pollNames.size());
 				// if the name isn't long enough, reject it
 				pollName = editPollName.getText().toString();
+				pollName.replaceAll("\n", " ");
+
 				if (pollName.length() < 1) {
 					Toast.makeText(getBaseContext(), "Missing poll name!", Toast.LENGTH_SHORT)
 							.show();
@@ -118,7 +120,9 @@ public class CreatePollActivity extends Activity {
 						Toast.makeText(getBaseContext(), "Polls are limited to 5 options",
 								Toast.LENGTH_SHORT).show();
 					} else {
-						options.add(text.toString());
+						String newOption = text.toString();
+						newOption.replaceAll("\n", " ");
+						options.add(newOption);
 						TextView tv = new TextView(getBaseContext());
 						tv.setText(options.size() + ".\t" + text);
 						tv.setTextColor(Color.BLACK);
@@ -131,9 +135,11 @@ public class CreatePollActivity extends Activity {
 	}
 
 	static public boolean saveArray(String key, List<String> options, Context context) {
+		key = sanitize(key);
 		SharedPreferences prefs = context.getSharedPreferences(MainActivity.POLL_PREFS,
 				Context.MODE_PRIVATE);
 		SharedPreferences.Editor editor = prefs.edit();
+
 		// I don't think you need to remove first but oh well
 		editor.remove(key + "Size"); // remove what might be there
 		editor.putInt(key + "Size", options.size());
@@ -147,9 +153,12 @@ public class CreatePollActivity extends Activity {
 	}
 
 	static public boolean saveIntArray(String key, List<Integer> options, Context context) {
+		key = sanitize(key);
+
 		SharedPreferences prefs = context.getSharedPreferences(MainActivity.POLL_PREFS,
 				Context.MODE_PRIVATE);
 		SharedPreferences.Editor editor = prefs.edit();
+
 		// I don't think you need to remove first but oh well
 		editor.remove(key + "Size"); // remove what might be there
 		editor.putInt(key + "Size", options.size());
@@ -162,8 +171,15 @@ public class CreatePollActivity extends Activity {
 		return editor.commit();
 	}
 
+	private static String sanitize(String key) {
+		int hash = key.hashCode();
+		return Integer.toString(hash);
+	}
+
 	// retrieves a String array List
 	static public void loadArray(String key, List<String> options, Context context) {
+		key = sanitize(key);
+
 		SharedPreferences prefs = context.getSharedPreferences(MainActivity.POLL_PREFS,
 				Context.MODE_PRIVATE);
 		if (options != null)
@@ -179,6 +195,9 @@ public class CreatePollActivity extends Activity {
 
 	// retrieves a String array List
 	static public void loadIntArray(String key, List<Integer> counts, Context context) {
+
+		key = sanitize(key);
+
 		SharedPreferences prefs = context.getSharedPreferences(MainActivity.POLL_PREFS,
 				Context.MODE_PRIVATE);
 		if (counts != null) {

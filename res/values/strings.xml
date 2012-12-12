@@ -6,7 +6,7 @@
     <string name="title_activity_main">A Voting App 0.1</string>
     <string name="buttonCreateNewPoll">Create a new poll</string>
     <string name="buttonCreatePoll">Create poll</string>
-    <string name="buttonFindPolls">Connect with nearby polls</string>
+    <string name="buttonFindPolls">Connect with nearby devices</string>
      <string name="buttonInitiateFind">Choose a device</string>
     <string name="enterPollName">Enter Poll Name</string>
     <string name="enterOptionName">Enter Option Name</string>

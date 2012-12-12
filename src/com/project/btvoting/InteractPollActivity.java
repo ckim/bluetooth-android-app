@@ -179,7 +179,6 @@ public class InteractPollActivity extends Activity {
 
 	// The Handler that gets information back from the BluetoothChatService
 	private final Handler mHandler = new Handler() {
-
 		@Override
 		public void handleMessage(Message msg) {
 			Log.d(TAG, "in the handler");
@@ -190,15 +189,16 @@ public class InteractPollActivity extends Activity {
 				case BluetoothChatService.STATE_CONNECTED:
 					mTitle.setText(R.string.title_connected_to);
 					mTitle.append(cutToXChars(mConnectedDeviceName, 8));
-
+					title = (TextView) findViewById(R.id.otherPollNames);
 					if (!isRequestor) {
-						Log.d(TAG, "sent polls as requestee");
 						if (!pollsSent) {
+							Log.d(TAG, "sent polls as requestee");
 							sendPolls();
 						}
+						title.setText("Connected to " + cutToXChars(mConnectedDeviceName, 8));
 					} else {
+						// requestor
 						Log.d(TAG, "is requestor");
-						title = (TextView) findViewById(R.id.otherPollNames);
 						title.setText(cutToXChars(mConnectedDeviceName, 8) + "'s polls");
 					}
 
@@ -214,6 +214,8 @@ public class InteractPollActivity extends Activity {
 					mTitle.setText(R.string.title_not_connected);
 					title = (TextView) findViewById(R.id.otherPollNames);
 					title.setText("");
+					mPollArrayAdapter.clear(); // clear all the things
+					isRequestor = false; // reset all the things
 					break;
 				}
 				break;
@@ -239,7 +241,6 @@ public class InteractPollActivity extends Activity {
 								"You have already voted on this poll!", Toast.LENGTH_SHORT).show();
 					}
 				}
-				//				mPollArrayAdapter.add(mConnectedDeviceName + ":  " + readMessage);
 
 				break;
 			case MESSAGE_DEVICE_NAME:
@@ -348,7 +349,6 @@ public class InteractPollActivity extends Activity {
 		// Check that we're actually connected before trying anything
 		if (mChatService.getState() != BluetoothChatService.STATE_CONNECTED) {
 			Toast.makeText(this, R.string.not_connected, Toast.LENGTH_SHORT).show();
-			mPollArrayAdapter.clear();
 			return;
 		}
 
@@ -395,11 +395,21 @@ public class InteractPollActivity extends Activity {
 
 	private void receivePollChoice(String choiceString) {
 		// if the requestee receives a string/number thing
-		Log.d(TAG, "received poll choice " + choiceString); // :) :) :)
+		Log.d(TAG, "received poll choice " + choiceString); // :)
 		String[] infos = choiceString.split(" ");
 		String mac = infos[0];
-		String name = infos[1];
-		int choice = Integer.parseInt(infos[2]);
+		String name = "";
+		if (infos.length > 3) {
+			// then there are spaces in the poll name
+			for(int i = 1; i< (infos.length-1); i++) {
+				name += infos[i]+" ";
+			}
+		}else {
+			name = infos[1];
+		}
+		// choice is the last thing
+		int locationOfChoice = infos.length-1;
+		int choice = Integer.parseInt(infos[locationOfChoice]);
 
 		Log.d(TAG, "poll name is " + name);
 
@@ -434,8 +444,8 @@ public class InteractPollActivity extends Activity {
 			CreatePollActivity.saveArray((name + MainActivity.POLL_RESPONDERS), responders,
 					getBaseContext());
 
-			mPollArrayAdapter.add(cutToXChars(mac, 10) + " voted for "
-					+ options.get(choice) + " in " + name);
+			mPollArrayAdapter.add(cutToXChars(mac, 10) + " voted for " + options.get(choice)
+					+ " in " + name);
 		}
 
 	}
