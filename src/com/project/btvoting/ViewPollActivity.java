@@ -31,9 +31,11 @@ public class ViewPollActivity extends Activity {
 
 	int numPolls;
 	protected LinearLayout pollOptions;
+	protected LinearLayout otherPollOptions;
 	protected List<String> options;
 	protected List<Integer> counts;
 	protected List<String> pollNames;
+	protected List<String> otherPollResponses;
 	protected String pollName;
 	TextView topName;
 
@@ -43,6 +45,7 @@ public class ViewPollActivity extends Activity {
 		options = new ArrayList<String>();
 		counts = new ArrayList<Integer>();
 		pollNames = new ArrayList<String>();
+		otherPollResponses = new ArrayList<String>();
 		pollName = "";
 		initLayout();
 	}
@@ -50,6 +53,24 @@ public class ViewPollActivity extends Activity {
 	private void initLayout() {
 		setContentView(R.layout.activity_view);
 		pollOptions = (LinearLayout) findViewById(R.id.pollList);
+		otherPollOptions = (LinearLayout) findViewById(R.id.otherPollList);
+
+		// load the other polls
+		CreatePollActivity.loadArray(MainActivity.OTHER_POLL_RESPONSES, otherPollResponses,
+				getBaseContext());
+		if (otherPollResponses.size() > 0) {
+		for (String response : otherPollResponses) {
+			TextView tv = new TextView(getBaseContext());
+			tv.setTextColor(Color.BLACK);
+			tv.setText(response);
+			otherPollOptions.addView(tv, LinearLayout.LayoutParams.WRAP_CONTENT);
+		}
+		} else {
+			TextView tv = new TextView(getBaseContext());
+			tv.setTextColor(Color.BLACK);
+			tv.setText("No other poll responses found");
+			otherPollOptions.addView(tv, LinearLayout.LayoutParams.WRAP_CONTENT);
+		}
 
 		// load the list of poll names to view
 		CreatePollActivity.loadArray(MainActivity.POLL_NAMES, pollNames, getBaseContext());

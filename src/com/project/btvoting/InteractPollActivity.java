@@ -439,7 +439,7 @@ public class InteractPollActivity extends Activity {
 		//			// now remove the last space
 		//			
 		//		} else {
-			name = infos[1];
+		name = infos[1];
 		//		}
 		// choice is the last thing
 		int locationOfChoice = infos.length - 1;
@@ -502,6 +502,29 @@ public class InteractPollActivity extends Activity {
 					String mac = BluetoothAdapter.getDefaultAdapter().getAddress();
 					String message = mac + "|" + name + "|" + item;
 					sendMessage(message);
+
+					ArrayList<String> otherPollResponses = new ArrayList<String>();
+
+					// save in the list that you chose that
+					CreatePollActivity.loadArray(MainActivity.OTHER_POLL_RESPONSES,
+							otherPollResponses, getBaseContext());
+
+					Boolean canAdd = true;
+					// check to see if any other response has the same mac and name combo
+					for (String string : otherPollResponses) {
+						if (string.contains(name) && string.contains(mac)) {
+							canAdd = false;
+						}
+					}
+
+					if (canAdd) {
+						otherPollResponses.add("Voted for \"" + items[item] + "\" in \"" + name
+								+ "\" on "
+								+ mac);
+
+						CreatePollActivity.saveArray(MainActivity.OTHER_POLL_RESPONSES,
+								otherPollResponses, getBaseContext());
+					}
 
 					dialog.dismiss();
 					//					Toast.makeText(getApplicationContext(), items[item], Toast.LENGTH_SHORT).show();

@@ -24,6 +24,8 @@ public class MainActivity extends Activity {
 
 	private static final int REQUEST_ENABLE_BT = 2;
 
+	protected static final String OTHER_POLL_RESPONSES = "otherPollResponses";
+
 	protected Button createPoll;
 	protected Button findPolls;
 	protected Button viewPolls;

@@ -29,6 +29,23 @@
                 android:orientation="vertical" >
             </LinearLayout>
             
+            <TextView
+                android:id="@+id/otherPollName"
+                android:textSize="20sp"
+                android:gravity="center"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/otherListOfPolls" />
+            
+             <LinearLayout
+                xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/otherPollList"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" >
+            </LinearLayout>
+            
+            
         </LinearLayout>
     </ScrollView>
 
