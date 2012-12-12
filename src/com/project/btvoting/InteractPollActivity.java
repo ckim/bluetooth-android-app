@@ -28,6 +28,7 @@ public class InteractPollActivity extends Activity {
 	private static final String TAG = "InteractPollActivity";
 
 	protected Button initiateFind;
+	protected Button terminate;
 
 	// Message types sent from the BluetoothChatService Handler
 	public static final int MESSAGE_STATE_CHANGE = 1;
@@ -140,6 +141,7 @@ public class InteractPollActivity extends Activity {
 		mPollsView.setOnItemClickListener(mDeviceClickListener);
 
 		initiateFind = (Button) findViewById(R.id.initiateFind);
+		terminate = (Button) findViewById(R.id.terminate);
 
 		initiateFind.setOnClickListener(new OnClickListener() {
 			public void onClick(View view) {
@@ -148,6 +150,18 @@ public class InteractPollActivity extends Activity {
 				Log.d(TAG, "set isrequestor to true on button press");
 				Intent serverIntent = new Intent(InteractPollActivity.this, FindPollActivity.class);
 				startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
+			}
+		});
+
+		terminate.setOnClickListener(new OnClickListener() {
+			public void onClick(View view) {
+				// people can't find the poll if you're not discoverable
+				if (mChatService != null) {
+					mChatService.stop();
+				} else {
+					Toast.makeText(getApplicationContext(), "There is no connection to terminate",
+							Toast.LENGTH_SHORT).show();
+				}
 			}
 		});
 
@@ -218,6 +232,8 @@ public class InteractPollActivity extends Activity {
 					title.setText("");
 					mPollArrayAdapter.clear(); // clear all the things
 					isRequestor = false; // reset all the things
+					pollsSent = false; // also clear this
+					pollsReceived = false; // this too!!
 					Log.d(TAG, "set isrequestor to false in STATE_NONE");
 					break;
 				}

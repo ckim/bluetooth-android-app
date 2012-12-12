@@ -17,6 +17,8 @@
     <string name="returnToMain">Return to main screen</string>
     <string name="listOfPolls">Your Polls</string>
     <string name="otherPollNames">Discovered Polls</string>
+    <string name="terminate">Terminate connection</string>
+    
 
     <!-- BluetoothChat -->
     <string name="send">Send</string>

@@ -399,6 +399,7 @@ public class BluetoothChatService {
 		}
 	}
 
+
 	/**
 	 * This thread runs during a connection with a remote device.
 	 * It handles all incoming and outgoing transmissions.
