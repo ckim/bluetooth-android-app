@@ -41,6 +41,7 @@ public class InteractPollActivity extends Activity {
 	public static final String TOAST = "toast";
 
 	// Intent request codes
+	public static final int CHOSE_NOTHING = 0;
 	public static final int REQUEST_CONNECT_DEVICE = 1;
 	private static final int REQUEST_ENABLE_BT = 2;
 
@@ -144,6 +145,7 @@ public class InteractPollActivity extends Activity {
 			public void onClick(View view) {
 				// people can't find the poll if you're not discoverable
 				isRequestor = true;
+				Log.d(TAG, "set isrequestor to true on button press");
 				Intent serverIntent = new Intent(InteractPollActivity.this, FindPollActivity.class);
 				startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
 			}
@@ -216,6 +218,7 @@ public class InteractPollActivity extends Activity {
 					title.setText("");
 					mPollArrayAdapter.clear(); // clear all the things
 					isRequestor = false; // reset all the things
+					Log.d(TAG, "set isrequestor to false in STATE_NONE");
 					break;
 				}
 				break;
@@ -310,13 +313,22 @@ public class InteractPollActivity extends Activity {
 
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
 		Log.d(TAG, "in onActivityResult");
-		Log.d(TAG, "onActivityResult " + resultCode);
+		Log.d(TAG, "onActivityResult resultCode " + resultCode);
+		Log.d(TAG, "onActivityResult requestCode " + resultCode);
+
+		if (resultCode == Activity.RESULT_CANCELED) {
+			isRequestor = false;
+			Log.d(TAG,
+					"set 1 isrequestor to false in requestConnectDevice because no choice was made");
+		}
 
 		switch (requestCode) {
 		case REQUEST_CONNECT_DEVICE:
 			Log.d(TAG, "in requestConnectDevice!!!!");
 			// When DeviceListActivity returns with a device to connect
 			if (resultCode == Activity.RESULT_OK) {
+				isRequestor = true;
+				Log.d(TAG, "set isrequestor to true in requestConnectDevice");
 				// Get the device MAC address
 				String address = data.getExtras().getString(FindPollActivity.EXTRA_DEVICE_ADDRESS);
 				// Get the BLuetoothDevice object
@@ -324,13 +336,17 @@ public class InteractPollActivity extends Activity {
 				Log.d(TAG, "address is " + address + "!!!!!!!!!!");
 				// Attempt to connect to the device
 				mChatService.connect(device);
+			} else if (resultCode == Activity.RESULT_CANCELED) {
+				isRequestor = false;
+				Log.d(TAG,
+						"set 2 isrequestor to false in requestConnectDevice because no choice was made");
 			}
 			break;
 		case REQUEST_ENABLE_BT:
 			Log.d(TAG, "in requestEnableBT!!!!");
 			// When the request to enable Bluetooth returns
 			if (resultCode == Activity.RESULT_OK) {
-				// Bluetooth is now enabled, so set up a chat session
+				// Bluetooth is now enabled, so set up a chat sessi
 				setupChat();
 			} else {
 				// User did not enable Bluetooth or an error occured
@@ -401,14 +417,14 @@ public class InteractPollActivity extends Activity {
 		String name = "";
 		if (infos.length > 3) {
 			// then there are spaces in the poll name
-			for(int i = 1; i< (infos.length-1); i++) {
-				name += infos[i]+" ";
+			for (int i = 1; i < (infos.length - 1); i++) {
+				name += infos[i] + " ";
 			}
-		}else {
+		} else {
 			name = infos[1];
 		}
 		// choice is the last thing
-		int locationOfChoice = infos.length-1;
+		int locationOfChoice = infos.length - 1;
 		int choice = Integer.parseInt(infos[locationOfChoice]);
 
 		Log.d(TAG, "poll name is " + name);
