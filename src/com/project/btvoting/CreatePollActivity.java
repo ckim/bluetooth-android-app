@@ -79,6 +79,10 @@ public class CreatePollActivity extends Activity {
 				} else if (pollNames.contains(pollName)) {
 					Toast.makeText(getBaseContext(), "That poll name is already in use!",
 							Toast.LENGTH_SHORT).show();
+				} else if (pollName.contains(":") || pollName.contains("|")) {
+					Toast.makeText(getBaseContext(),
+							"Poll names cannot contain the : or | character", Toast.LENGTH_SHORT)
+							.show();
 				} else {
 					Log.d("CreatePoll",
 							"pollName is " + pollName + " and there are " + options.size()
@@ -90,6 +94,9 @@ public class CreatePollActivity extends Activity {
 					for (int i = 0; i < options.size(); i++) {
 						counts.add(0);
 					}
+
+					Log.d("CreatePoll", " counts is this big " + options.size());
+
 					// persist the poll counts
 					saveIntArray(pollName + MainActivity.POLL_COUNTS, counts, getBaseContext());
 

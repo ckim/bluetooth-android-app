@@ -412,17 +412,19 @@ public class InteractPollActivity extends Activity {
 	private void receivePollChoice(String choiceString) {
 		// if the requestee receives a string/number thing
 		Log.d(TAG, "received poll choice " + choiceString); // :)
-		String[] infos = choiceString.split(" ");
+		String[] infos = choiceString.split("\\|");
 		String mac = infos[0];
 		String name = "";
-		if (infos.length > 3) {
-			// then there are spaces in the poll name
-			for (int i = 1; i < (infos.length - 1); i++) {
-				name += infos[i] + " ";
-			}
-		} else {
+		//		if (infos.length > 3) {
+		//			// then there are spaces in the poll name
+		//			for (int i = 1; i < (infos.length - 1); i++) {
+		//				name += infos[i] + " ";
+		//			}
+		//			// now remove the last space
+		//			
+		//		} else {
 			name = infos[1];
-		}
+		//		}
 		// choice is the last thing
 		int locationOfChoice = infos.length - 1;
 		int choice = Integer.parseInt(infos[locationOfChoice]);
@@ -482,7 +484,7 @@ public class InteractPollActivity extends Activity {
 					// send a message to the requestee the poll name 
 					// and number that was picked (0...n)
 					String mac = BluetoothAdapter.getDefaultAdapter().getAddress();
-					String message = mac + " " + name + " " + item;
+					String message = mac + "|" + name + "|" + item;
 					sendMessage(message);
 
 					dialog.dismiss();
