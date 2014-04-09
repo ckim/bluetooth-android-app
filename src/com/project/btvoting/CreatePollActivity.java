@@ -126,6 +126,10 @@ public class CreatePollActivity extends Activity {
 					if (options.size() > 5) {
 						Toast.makeText(getBaseContext(), "Polls are limited to 5 options",
 								Toast.LENGTH_SHORT).show();
+					} else if (text.toString().contains(":") || text.toString().contains("|")) {
+						Toast.makeText(getBaseContext(),
+								"Poll options cannot contain the : or | character",
+								Toast.LENGTH_SHORT).show();
 					} else {
 						String newOption = text.toString();
 						newOption.replaceAll("\n", " ");
